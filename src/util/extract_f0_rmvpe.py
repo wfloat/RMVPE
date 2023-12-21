@@ -46,7 +46,7 @@ class FeatureInput(object):
         # p_len = x.shape[0] // self.hop
         if f0_method == "rmvpe":
             if hasattr(self, "model_rmvpe") == False:
-                from src.util.rmvpe import RMVPE
+                from util.rmvpe import RMVPE
 
                 print("Loading rmvpe model")
                 self.model_rmvpe = RMVPE(
