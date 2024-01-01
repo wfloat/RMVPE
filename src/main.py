@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 def main():
 
-    audio, sampling_rate = sf.read("./in.wav")
+    audio, sampling_rate = sf.read("./1_video-144p_(Vocals).wav")
     if len(audio.shape) > 1:
         audio = librosa.to_mono(audio.transpose(1, 0))
     audio_bak = audio.copy()
@@ -31,7 +31,7 @@ def main():
     tensor = np.array(f0)
 
     # Write the tensor to a file
-    with open('tensor.txt', 'w') as file:
+    with open('omniman.txt', 'w') as file:
         for value in tensor:
             file.write(f"{value}\n")
 
