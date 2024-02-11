@@ -11,29 +11,33 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+VOCAL_AUDIO_PATH = "../../rvc-archiver/frequency/vocals"
+VOCAL_FREQUENCY_PATH = "../../rvc-archiver/frequency/f0"
+
 def main():
+    file_names = [file for file in os.listdir(VOCAL_AUDIO_PATH) if os.path.isfile(os.path.join(VOCAL_AUDIO_PATH, file))]
+    for filename in file_names:
+        audio, sampling_rate = sf.read(f"{VOCAL_AUDIO_PATH}/{filename}")
+        if len(audio.shape) > 1:
+            audio = librosa.to_mono(audio.transpose(1, 0))
+        audio_bak = audio.copy()
+        if sampling_rate != 16000:
+            audio = librosa.resample(audio, orig_sr=sampling_rate, target_sr=16000)
+        model_path = "./weights/rmvpe.pt"
+        thred = 0.03  # 0.01
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        rmvpe = RMVPE(model_path, is_half=False, device=device)
+        t0 = ttime()
+        f0 = rmvpe.infer_from_audio(audio, thred=thred)
+        t1 = ttime()
+        logger.info("%s %.2f", f0.shape, t1 - t0)
+        print(f0)
+        tensor = np.array(f0)
 
-    audio, sampling_rate = sf.read("./1_video-144p_(Vocals).wav")
-    if len(audio.shape) > 1:
-        audio = librosa.to_mono(audio.transpose(1, 0))
-    audio_bak = audio.copy()
-    if sampling_rate != 16000:
-        audio = librosa.resample(audio, orig_sr=sampling_rate, target_sr=16000)
-    model_path = "./weights/rmvpe.pt"
-    thred = 0.03  # 0.01
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    rmvpe = RMVPE(model_path, is_half=False, device=device)
-    t0 = ttime()
-    f0 = rmvpe.infer_from_audio(audio, thred=thred)
-    t1 = ttime()
-    logger.info("%s %.2f", f0.shape, t1 - t0)
-    print(f0)
-    tensor = np.array(f0)
-
-    # Write the tensor to a file
-    with open('omniman.txt', 'w') as file:
-        for value in tensor:
-            file.write(f"{value}\n")
+        # Write the tensor to a file
+        with open(f'{VOCAL_FREQUENCY_PATH}/{filename}.txt', 'w') as file:
+            for value in tensor:
+                file.write(f"{value}\n")
 
 
 # def main():
